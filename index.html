@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpeShop - Premium Electronics</title>
+    <link rel="icon" href="https://img.icons8.com/color/40/shopping-cart.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .product-card {
+            transition: all 0.3s ease;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .filter-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .hero-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.6s ease forwards;
+        }
+        
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .cart-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .cart-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cart-content {
+            background: white;
+            border-radius: 1rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-gradient-to-r from-purple-500 to-blue-500 shadow-lg sticky top-0 z-50">  
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <a href="#home" class="flex items-center space-x-3">
+                        <!-- Profile Dropdown -->
+                        <div class="relative ml-4">
+                            <button id="profileBtn" class="focus:outline-none flex items-center" aria-label="Open profile menu">
+                                <img src="https://img.icons8.com/fluent/40/user-male-circle.png" alt="OpeShop Logo" class="h-8 w-8 rounded-full shadow-lg bg-white p-1">
+                            </button>
+                            <div id="profileMenu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50 hidden">
+                                <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">My Profile</a>
+                                <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Orders</a>
+                                <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Settings</a>
+                                <div class="border-t my-2"></div>
+                                <a href="#" class="block px-4 py-2 text-red-600 hover:bg-gray-100">Logout</a>
+                            </div>
+                        </div>
+                        <script>
+                            // Profile dropdown toggle (responsive)
+                            const profileBtn = document.getElementById('profileBtn');
+                            const profileMenu = document.getElementById('profileMenu');
+                            profileBtn.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                profileMenu.classList.toggle('hidden');
+                            });
+                            document.addEventListener('click', () => {
+                                profileMenu.classList.add('hidden');
+                            });
+                            profileMenu.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                            });
+
+                            // Responsive: move dropdown below icon on mobile
+                            function updateProfileMenuPosition() {
+                                if (window.innerWidth < 768) {
+                                    profileMenu.classList.add('left-0');
+                                    profileMenu.classList.remove('right-0');
+                                } else {
+                                    profileMenu.classList.add('right-0');
+                                    profileMenu.classList.remove('left-0');
+                                }
+                            }
+                            window.addEventListener('resize', updateProfileMenuPosition);
+                            document.addEventListener('DOMContentLoaded', updateProfileMenuPosition);
+                        </script>
+                        <span class="text-2xl font-extrabold text-white tracking-wide">OpeShop</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="relative hidden md:block">
+                        <input type="text" id="searchInput" placeholder="Search products..." class="pl-10 pr-4 py-2 border-none rounded-lg bg-white/80 text-gray-800 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:bg-white">
+                        <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <button id="wishlistBtn" class="text-white/80 hover:text-yellow-300 relative transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                        </svg>
+                        <span id="wishlistCount" class="absolute -top-2 -right-2 bg-yellow-400 text-gray-900 text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                    </button>
+                    <button id="cartBtn" class="relative group transition-colors">
+                        <span class="sr-only">View Cart</span>
+                        <svg class="w-6 h-6 text-white/80 group-hover:text-yellow-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <circle cx="9" cy="21" r="1.5" fill="currentColor"/>
+                            <circle cx="19" cy="21" r="1.5" fill="currentColor"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.5 4h2l2.68 13.39A2 2 0 009.13 19h7.74a2 2 0 001.95-1.61L21.5 7H6"></path>
+                        </svg>
+                        <span id="cartCount" class="absolute -top-2 -right-2 bg-yellow-400 text-gray-900 text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                    </button>
+                    <!-- Mobile menu button (right corner) -->
+                    <div class="md:hidden flex items-center">
+                        <button id="mobileMenuBtn" class="text-white focus:outline-none" aria-label="Open menu">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#home" class="text-white/80 hover:text-yellow-300 font-medium transition-colors">Home</a>
+                    <a href="#products" class="text-white/80 hover:text-yellow-300 font-medium transition-colors">Products</a>
+                    <a href="#about" class="text-white/80 hover:text-yellow-300 font-medium transition-colors">About</a>
+                    <a href="#contact" class="text-white/80 hover:text-yellow-300 font-medium transition-colors">Contact</a>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile menu, hidden by default -->
+        <div id="mobileMenu" class="md:hidden fixed inset-0 bg-black bg-opacity-60 z-50 hidden">
+            <div class="absolute top-0 right-0 w-64 bg-white shadow-lg h-full flex flex-col">
+                <button id="closeMobileMenu" class="self-end m-4 text-gray-600 hover:text-purple-600 focus:outline-none" aria-label="Close menu">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+                <nav class="flex flex-col space-y-4 mt-8 px-8">
+                    <a href="#home" class="text-gray-800 hover:text-purple-600 font-medium transition-colors">Home</a>
+                    <a href="#products" class="text-gray-800 hover:text-purple-600 font-medium transition-colors">Products</a>
+                    <a href="#about" class="text-gray-800 hover:text-purple-600 font-medium transition-colors">About</a>
+                    <a href="#contact" class="text-gray-800 hover:text-purple-600 font-medium transition-colors">Contact</a>
+                </nav>
+            </div>
+        </div>
+        <script>
+            // Mobile menu toggle
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+            const closeMobileMenu = document.getElementById('closeMobileMenu');
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.remove('hidden');
+            });
+            closeMobileMenu.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+            });
+            // Close menu when clicking outside
+            mobileMenu.addEventListener('click', (e) => {
+                if (e.target === mobileMenu) {
+                    mobileMenu.classList.add('hidden');
+                }
+            });
+            // Optional: close menu on nav link click
+            mobileMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenu.classList.add('hidden');
+                });
+            });
+        </script>
+    </nav>
+
+    <!-- Cart Modal -->
+    <div id="cartModal" class="cart-modal">
+        <div class="cart-content">
+            <div class="p-6 border-b">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-2xl font-bold text-gray-800">Shopping Cart</h3>
+                    <button id="closeCart" class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="cartItems" class="p-6">
+                <p class="text-gray-500 text-center py-8">Your cart is empty</p>
+            </div>
+            <div id="cartFooter" class="p-6 border-t bg-gray-50 hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xl font-bold">Total: <span id="cartTotal">$0</span></span>
+                </div>
+                <div class="flex space-x-4">
+                    <button id="clearCart" class="flex-1 bg-gray-600 text-white py-3 rounded-lg hover:bg-gray-700 transition-colors">
+                        Clear Cart
+                    </button>
+                    <button id="checkoutBtn" class="flex-1 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors">
+                        Checkout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <div id="home"></div>
+    <section class="relative text-white py-20 overflow-hidden">
+        <!-- Video Background -->
+        <video autoplay muted loop class="absolute inset-0 w-full h-full object-cover z-0">
+            <source src="https://cdn.pixabay.com/video/2022/11/26/140578-775389242_tiny.mp4" type="video/mp4">
+            <!-- Fallback for browsers that don't support video -->
+        </video>
+        
+        <!-- Overlay -->
+        <div class="absolute inset-0 bg-black bg-opacity-50 z-10"></div>
+        
+        <!-- Content -->
+        <div class="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-5xl md:text-6xl font-bold mb-6 fade-in drop-shadow-lg">Premium Electronics</h1>
+            <p class="text-xl md:text-2xl mb-8 fade-in drop-shadow-lg" style="animation-delay: 0.2s">Discover the latest in technology and innovation</p>
+            <button class="bg-white text-purple-600 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors fade-in shadow-lg" style="animation-delay: 0.4s"
+                onclick="document.getElementById('products').scrollIntoView({ behavior: 'smooth' })">
+                Explore Products
+            </button>
+        </div>
+    </section>
+
+    <!-- Filter Section -->
+    <section class="py-12" id="products">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-center mb-8 text-gray-800">Our Products</h2>
+            
+            <!-- Filter and Sort Controls -->
+            <div class="flex flex-wrap justify-between items-center gap-4 mb-12">
+                <div class="flex flex-wrap gap-4">
+                    <button class="filter-btn active px-6 py-2 rounded-full border border-gray-300 font-medium" data-filter="all">
+                        All Products
+                    </button>
+                    <button class="filter-btn px-6 py-2 rounded-full border border-gray-300 font-medium" data-filter="smartphones">
+                        Smartphones
+                    </button>
+                    <button class="filter-btn px-6 py-2 rounded-full border border-gray-300 font-medium" data-filter="laptops">
+                        Laptops
+                    </button>
+                    <button class="filter-btn px-6 py-2 rounded-full border border-gray-300 font-medium" data-filter="accessories">
+                        Accessories
+                    </button>
+                    <button class="filter-btn px-6 py-2 rounded-full border border-gray-300 font-medium" data-filter="audio">
+                        Audio
+                    </button>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <select id="sortSelect" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                        <option value="name">Sort by Name</option>
+                        <option value="price-low">Price: Low to High</option>
+                        <option value="price-high">Price: High to Low</option>
+                    </select>
+                    <button id="compareBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400" disabled>
+                        Compare Selected (0)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8" id="products-grid">
+                <!-- Product 1 -->
+                <div class="product-card bg-white rounded-xl shadow-lg overflow-hidden" data-category="smartphones" data-price="999" data-name="iPhone 15 Pro">
+                    <div class="relative">
+                        <video autoplay muted loop class="absolute inset-0 w-full h-48 object-cover z-0 rounded-t-xl">
+                            <source src="https://cdn.pixabay.com/video/2019/12/10/30043-378748087_tiny.mp4" type="video/mp4">
+                        </video>
+                        <div class="absolute inset-0 h-48 opacity-60 rounded-t-xl"></div>
+                        <div class="relative flex items-center justify-center h-48">
+                        </div>
+                        <input type="checkbox" class="compare-checkbox absolute top-2 right-2 w-5 h-5 text-purple-600 bg-white border-2 border-gray-300 rounded focus:ring-purple-500">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">iPhone 15 Pro</h3>
+                        <p class="text-gray-600 mb-4">Latest flagship with titanium design</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-purple-600">$999</span>
+                            <button class="wishlist-heart text-gray-400 hover:text-red-500 transition-colors p-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="add-to-cart flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                Add to Cart
+                            </button>
+                            <button class="buy-now flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                                Buy Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 2 -->
+                <div class="product-card bg-white rounded-xl shadow-lg overflow-hidden" data-category="laptops" data-price="1599" data-name="MacBook Pro M3">
+                    <div class="relative">
+                        <video autoplay muted loop class="absolute inset-0 w-full h-48 object-cover z-0 rounded-t-xl">
+                            <source src="Generated File September 02, 2025 - 11_50AM.mp4" type="video/mp4">
+                        </video>
+                        <div class="absolute inset-0 h-48 opacity-60 rounded-t-xl"></div>
+                        <div class="relative flex items-center justify-center h-48">
+                        </div>
+                        <input type="checkbox" class="compare-checkbox absolute top-2 right-2 w-5 h-5 text-purple-600 bg-white border-2 border-gray-300 rounded focus:ring-purple-500">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">MacBook Pro M3</h3>
+                        <p class="text-gray-600 mb-4">Professional laptop with M3 chip</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-purple-600">$1,599</span>
+                            <button class="wishlist-heart text-gray-400 hover:text-red-500 transition-colors p-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="add-to-cart flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                Add to Cart
+                            </button>
+                            <button class="buy-now flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                                Buy Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 3 -->
+                <div class="product-card bg-white rounded-xl shadow-lg overflow-hidden" data-category="audio" data-price="249" data-name="AirPods Pro">
+                    <div class="relative">
+                        <video autoplay muted loop class="absolute inset-0 w-full h-48 object-cover z-0 rounded-t-xl">
+                            <source src="https://cdn.pixabay.com/video/2023/04/21/159925-820010950_tiny.mp4" type="video/mp4">
+                        </video>
+                        <div class="absolute inset-0 h-48 opacity-60 rounded-t-xl"></div>
+                        <div class="relative flex items-center justify-center h-48">
+                        </div>
+                        <input type="checkbox" class="compare-checkbox absolute top-2 right-2 w-5 h-5 text-purple-600 bg-white border-2 border-gray-300 rounded focus:ring-purple-500">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">AirPods Pro</h3>
+                        <p class="text-gray-600 mb-4">Wireless earbuds with noise cancellation</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-purple-600">$249</span>
+                            <button class="wishlist-heart text-gray-400 hover:text-red-500 transition-colors p-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="add-to-cart flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                Add to Cart
+                            </button>
+                            <button class="buy-now flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                                Buy Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 4 -->
+                <div class="product-card bg-white rounded-xl shadow-lg overflow-hidden" data-category="accessories" data-price="39" data-name="MagSafe Charger">
+                    <div class="relative">
+                        <video autoplay muted loop class="absolute inset-0 w-full h-48 object-cover z-0 rounded-t-xl">
+                            <source src="https://cdn.pixabay.com/video/2017/03/26/8501-210166782_tiny.mp4" type="video/mp4">
+                        </video>
+                        <div class="absolute inset-0 h-48 opacity-60 rounded-t-xl"></div>
+                        <div class="relative flex items-center justify-center h-48">
+                        </div>
+                        <input type="checkbox" class="compare-checkbox absolute top-2 right-2 w-5 h-5 text-purple-600 bg-white border-2 border-gray-300 rounded focus:ring-purple-500">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">MagSafe Charger</h3>
+                        <p class="text-gray-600 mb-4">Wireless charging made simple</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-purple-600">$39</span>
+                            <button class="wishlist-heart text-gray-400 hover:text-red-500 transition-colors p-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="add-to-cart flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                Add to Cart
+                            </button>
+                            <button class="buy-now flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                                Buy Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 5 -->
+                <div class="product-card bg-white rounded-xl shadow-lg overflow-hidden" data-category="smartphones" data-price="899" data-name="Samsung Galaxy S24">
+                    <div class="relative">
+                        <video autoplay muted loop class="absolute inset-0 w-full h-48 object-cover z-0 rounded-t-xl">
+                            <source src="Generated File September 02, 2025 - 12_03PM.mp4" type="video/mp4">
+                        </video>
+                        <div class="absolute inset-0 h-48 opacity-60 rounded-t-xl"></div>
+                        <div class="relative flex items-center justify-center h-48">
+                        </div>
+                        <input type="checkbox" class="compare-checkbox absolute top-2 right-2 w-5 h-5 text-purple-600 bg-white border-2 border-gray-300 rounded focus:ring-purple-500">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">Samsung Galaxy S24</h3>
+                        <p class="text-gray-600 mb-4">Android flagship with AI features</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-purple-600">$899</span>
+                            <button class="wishlist-heart text-gray-400 hover:text-red-500 transition-colors p-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="add-to-cart flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                Add to Cart
+                            </button>
+                            <button class="buy-now flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                                Buy Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 6 -->
+                <div class="product-card bg-white rounded-xl shadow-lg overflow-hidden" data-category="laptops" data-price="1299" data-name="Dell XPS 13">
+                    <div class="relative">
+                        <video autoplay muted loop class="absolute inset-0 w-full h-48 object-cover z-0 rounded-t-xl">
+                            <source src="https://cdn.pixabay.com/video/2023/01/09/145864-787701151_tiny.mp4" type="video/mp4">
+                        </video>
+                        <div class="absolute inset-0 h-48 opacity-60 rounded-t-xl"></div>
+                        <div class="relative flex items-center justify-center h-48">
+                        </div>
+                        <input type="checkbox" class="compare-checkbox absolute top-2 right-2 w-5 h-5 text-purple-600 bg-white border-2 border-gray-300 rounded focus:ring-purple-500">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">Dell XPS 13</h3>
+                        <p class="text-gray-600 mb-4">Ultra-portable Windows laptop</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-purple-600">$1,299</span>
+                            <button class="wishlist-heart text-gray-400 hover:text-red-500 transition-colors p-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="add-to-cart flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                Add to Cart
+                            </button>
+                            <button class="buy-now flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                                Buy Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 7 -->
+                <div class="product-card bg-white rounded-xl shadow-lg overflow-hidden" data-category="audio" data-price="399" data-name="Sony WH-1000XM5">
+                    <div class="relative">
+                        <video autoplay muted loop class="absolute inset-0 w-full h-48 object-cover z-0 rounded-t-xl">
+                            <source src="https://cdn.pixabay.com/video/2021/11/16/98026-646632863_tiny.mp4" type="video/mp4">
+                        </video>
+                        <div class="absolute inset-0 h-48 opacity-60 rounded-t-xl"></div>
+                        <div class="relative flex items-center justify-center h-48">
+                        </div>
+                        <input type="checkbox" class="compare-checkbox absolute top-2 right-2 w-5 h-5 text-purple-600 bg-white border-2 border-gray-300 rounded focus:ring-purple-500">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">Sony WH-1000XM5</h3>
+                        <p class="text-gray-600 mb-4">Premium noise-canceling headphones</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-purple-600">$399</span>
+                            <button class="wishlist-heart text-gray-400 hover:text-red-500 transition-colors p-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="add-to-cart flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                Add to Cart
+                            </button>
+                            <button class="buy-now flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                                Buy Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 8 -->
+                <div class="product-card bg-white rounded-xl shadow-lg overflow-hidden" data-category="accessories" data-price="799" data-name="Apple Watch Ultra">
+                    <div class="relative">
+                        <video autoplay muted loop class="absolute inset-0 w-full h-48 object-cover z-0 rounded-t-xl">
+                            <source src="https://cdn.pixabay.com/video/2018/02/11/14255-685293354_tiny.mp4" type="video/mp4">
+                        </video>
+                        <div class="absolute inset-0 h-48 opacity-60 rounded-t-xl"></div>
+                        <div class="relative flex items-center justify-center h-48">
+                        </div>
+                        <input type="checkbox" class="compare-checkbox absolute top-2 right-2 w-5 h-5 text-purple-600 bg-white border-2 border-gray-300 rounded focus:ring-purple-500">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">Apple Watch Ultra</h3>
+                        <p class="text-gray-600 mb-4">Rugged smartwatch for adventures</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-purple-600">$799</span>
+                            <button class="wishlist-heart text-gray-400 hover:text-red-500 transition-colors p-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="add-to-cart flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                Add to Cart
+                            </button>
+                            <button class="buy-now flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                                Buy Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 9 -->
+                <div class="product-card bg-white rounded-xl shadow-lg overflow-hidden" data-category="smartphones" data-price="1199" data-name="Google Pixel 8 Pro">
+                    <div class="relative">
+                        <video autoplay muted loop class="absolute inset-0 w-full h-48 object-cover z-0 rounded-t-xl">
+                            <source src="Google%20Pixel%208%20pro%20%23shorts%20%23Google%20pixel%20pro.mp4" type="video/mp4">
+                        </video>
+                        <div class="absolute inset-0 h-48 opacity-60 rounded-t-xl"></div>
+                        <div class="relative flex items-center justify-center h-48">
+                        </div>
+                        <input type="checkbox" class="compare-checkbox absolute top-2 right-2 w-5 h-5 text-purple-600 bg-white border-2 border-gray-300 rounded focus:ring-purple-500">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">Google Pixel 8 Pro</h3>
+                        <p class="text-gray-600 mb-4">AI-powered photography and pure Android</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-purple-600">$1,199</span>
+                            <button class="wishlist-heart text-gray-400 hover:text-red-500 transition-colors p-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="add-to-cart flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                Add to Cart
+                            </button>
+                            <button class="buy-now flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                                Buy Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 10 -->
+                <div class="product-card bg-white rounded-xl shadow-lg overflow-hidden" data-category="laptops" data-price="2299" data-name="ASUS ROG Zephyrus G16">
+                    <div class="relative">
+                        <video autoplay muted loop class="absolute inset-0 w-full h-48 object-cover z-0 rounded-t-xl">
+                            <source src="18 - RAISE YOUR GAME. CARRY YOUR SQUAD.  _ ROG.mp4" type="video/mp4">
+                        </video>
+                        <div class="absolute inset-0 h-48 opacity-60 rounded-t-xl"></div>
+                        <div class="relative flex items-center justify-center h-48">
+                        </div>
+                        <input type="checkbox" class="compare-checkbox absolute top-2 right-2 w-5 h-5 text-purple-600 bg-white border-2 border-gray-300 rounded focus:ring-purple-500">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">ASUS ROG G16</h3>
+                        <p class="text-gray-600 mb-4">Gaming laptop with RTX 4070 GPU</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-purple-600">$2,299</span>
+                            <button class="wishlist-heart text-gray-400 hover:text-red-500 transition-colors p-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="add-to-cart flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                Add to Cart
+                            </button>
+                            <button class="buy-now flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                                Buy Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 11 -->
+                <div class="product-card bg-white rounded-xl shadow-lg overflow-hidden" data-category="audio" data-price="179" data-name="JBL Charge 5">
+                    <div class="relative">
+                        <video autoplay muted loop class="absolute inset-0 w-full h-48 object-cover z-0 rounded-t-xl">
+                            <source src="jbl.mp4" type="video/mp4">
+                        </video>
+                        <div class="absolute inset-0 h-48 opacity-60 rounded-t-xl"></div>
+                        <div class="relative flex items-center justify-center h-48">
+                        </div>
+                        <input type="checkbox" class="compare-checkbox absolute top-2 right-2 w-5 h-5 text-purple-600 bg-white border-2 border-gray-300 rounded focus:ring-purple-500">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">JBL Charge 5</h3>
+                        <p class="text-gray-600 mb-4">Portable Bluetooth speaker with powerbank</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-purple-600">$179</span>
+                            <button class="wishlist-heart text-gray-400 hover:text-red-500 transition-colors p-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="add-to-cart flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                Add to Cart
+                            </button>
+                            <button class="buy-now flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                                Buy Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 12 -->
+                <div class="product-card bg-white rounded-xl shadow-lg overflow-hidden" data-category="accessories" data-price="129" data-name="Anker PowerCore 26800">
+                    <div class="relative">
+                        <video autoplay muted loop class="absolute inset-0 w-full h-48 object-cover z-0 rounded-t-xl">
+                            <source src="anker.mp4" type="video/mp4">
+                        </video>
+                        <div class="absolute inset-0 h-48 opacity-60 rounded-t-xl"></div>
+                        <div class="relative flex items-center justify-center h-48">
+                        </div>
+                        <input type="checkbox" class="compare-checkbox absolute top-2 right-2 w-5 h-5 text-purple-600 bg-white border-2 border-gray-300 rounded focus:ring-purple-500">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">Anker PowerCore</h3>
+                        <p class="text-gray-600 mb-4">High-capacity portable charger</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-purple-600">$129</span>
+                            <button class="wishlist-heart text-gray-400 hover:text-red-500 transition-colors p-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="add-to-cart flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                Add to Cart
+                            </button>
+                            <button class="buy-now flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                                Buy Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 13 -->
+                <div class="product-card bg-white rounded-xl shadow-lg overflow-hidden" data-category="smartphones" data-price="749" data-name="OnePlus 12">
+                    <div class="relative">
+                        <video autoplay muted loop class="absolute inset-0 w-full h-48 object-cover z-0 rounded-t-xl">
+                            <source src="OnePlus 12 unboxing.mp4" type="video/mp4">
+                        </video>
+                        <div class="absolute inset-0 h-48 opacity-60 rounded-t-xl"></div>
+                        <div class="relative flex items-center justify-center h-48">
+                        </div>
+                        <input type="checkbox" class="compare-checkbox absolute top-2 right-2 w-5 h-5 text-purple-600 bg-white border-2 border-gray-300 rounded focus:ring-purple-500">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">OnePlus 12</h3>
+                        <p class="text-gray-600 mb-4">Flagship killer with 120W fast charging</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-purple-600">$749</span>
+                            <button class="wishlist-heart text-gray-400 hover:text-red-500 transition-colors p-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="add-to-cart flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                Add to Cart
+                            </button>
+                            <button class="buy-now flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                                Buy Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 14 -->
+                <div class="product-card bg-white rounded-xl shadow-lg overflow-hidden" data-category="laptops" data-price="899" data-name="Lenovo ThinkPad E16">
+                    <div class="relative">
+                        <video autoplay muted loop class="absolute inset-0 w-full h-48 object-cover z-0 rounded-t-xl">
+                            <source src="lenovo.mp4" type="video/mp4">
+                        </video>
+                        <div class="absolute inset-0 h-48 opacity-60 rounded-t-xl"></div>
+                        <div class="relative flex items-center justify-center h-48">
+                        </div>
+                        <input type="checkbox" class="compare-checkbox absolute top-2 right-2 w-5 h-5 text-purple-600 bg-white border-2 border-gray-300 rounded focus:ring-purple-500">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">Lenovo ThinkPad E16</h3>
+                        <p class="text-gray-600 mb-4">Business laptop with AMD Ryzen 7</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-purple-600">$899</span>
+                            <button class="wishlist-heart text-gray-400 hover:text-red-500 transition-colors p-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="add-to-cart flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                Add to Cart
+                            </button>
+                            <button class="buy-now flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                                Buy Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 15 -->
+                <div class="product-card bg-white rounded-xl shadow-lg overflow-hidden" data-category="audio" data-price="329" data-name="Bose QuietComfort Earbuds">
+                    <div class="relative">
+                        <video autoplay muted loop class="absolute inset-0 w-full h-48 object-cover z-0 rounded-t-xl">
+                            <source src="earbuds.mp4" type="video/mp4">
+                        </video>
+                        <div class="absolute inset-0 h-48 opacity-60 rounded-t-xl"></div>
+                        <div class="relative flex items-center justify-center h-48">
+                        </div>
+                        <input type="checkbox" class="compare-checkbox absolute top-2 right-2 w-5 h-5 text-purple-600 bg-white border-2 border-gray-300 rounded focus:ring-purple-500">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">QuietComfort Earbuds</h3>
+                        <p class="text-gray-600 mb-4">Premium noise-canceling earbuds</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-purple-600">$329</span>
+                            <button class="wishlist-heart text-gray-400 hover:text-red-500 transition-colors p-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="add-to-cart flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                Add to Cart
+                            </button>
+                            <button class="buy-now flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                                Buy Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 16 -->
+                <div class="product-card bg-white rounded-xl shadow-lg overflow-hidden" data-category="accessories" data-price="199" data-name="Logitech MX Master 3S">
+                    <div class="relative">
+                        <video autoplay muted loop class="absolute inset-0 w-full h-48 object-cover z-0 rounded-t-xl">
+                            <source src="Untitled design.mp4" type="video/mp4">
+                        </video>
+                        <div class="absolute inset-0 h-48 opacity-60 rounded-t-xl"></div>
+                        <div class="relative flex items-center justify-center h-48">
+                        </div>
+                        <input type="checkbox" class="compare-checkbox absolute top-2 right-2 w-5 h-5 text-purple-600 bg-white border-2 border-gray-300 rounded focus:ring-purple-500">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">Logitech MX Master 3S</h3>
+                        <p class="text-gray-600 mb-4">Advanced wireless mouse for productivity</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-purple-600">$199</span>
+                            <button class="wishlist-heart text-gray-400 hover:text-red-500 transition-colors p-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="add-to-cart flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                Add to Cart
+                            </button>
+                            <button class="buy-now flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                                Buy Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="py-20 bg-gradient-to-br from-purple-50 to-blue-100" id="about">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 fade-in" style="animation-delay:0.1s">
+                <h2 class="text-4xl font-extrabold text-purple-700 mb-6 tracking-tight animate-bounce">About OpeShop</h2>
+                <p class="text-xl text-gray-700 max-w-3xl mx-auto animate-fadeInUp">
+                    We're passionate about bringing you the latest and greatest in technology. Since 2025, OpeShop has been your trusted partner in discovering premium electronics that enhance your digital lifestyle.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-20">
+                <div class="fade-in" style="animation-delay:0.2s">
+                    <h3 class="text-3xl font-bold text-blue-700 mb-6 animate-fadeInUp">Our Story</h3>
+                    <p class="text-gray-700 mb-6 animate-fadeInUp">
+                        Founded by tech enthusiasts who believed that everyone deserves access to cutting-edge technology, TechVibe started as a small online retailer with a big vision. We wanted to create a platform where innovation meets accessibility, where the latest gadgets are just a click away.
+                    </p>
+                    <p class="text-gray-700 mb-6 animate-fadeInUp">
+                        Today, we've grown into a leading electronics retailer, serving over 500,000 customers worldwide. Our commitment to quality, customer service, and staying ahead of tech trends has made us the go-to destination for tech lovers everywhere.
+                    </p>
+                    <div class="grid grid-cols-2 gap-8">
+                        <div class="text-center fade-in" style="animation-delay:0.3s">
+                            <div class="text-3xl font-extrabold text-purple-600 mb-2 animate-pulse">500K+</div>
+                            <div class="text-gray-700">Happy Customers</div>
+                        </div>
+                        <div class="text-center fade-in" style="animation-delay:0.4s">
+                            <div class="text-3xl font-extrabold text-purple-600 mb-2 animate-pulse">50+</div>
+                            <div class="text-gray-700">Brand Partners</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gradient-to-br from-purple-400 to-blue-600 rounded-2xl p-8 text-white shadow-xl fade-in" style="animation-delay:0.5s">
+                    <div class="text-center">
+                        <svg class="w-24 h-24 mx-auto mb-6 text-white animate-spin-slow" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                        <h4 class="text-2xl font-bold mb-4 animate-fadeInUp">Our Mission</h4>
+                        <p class="text-lg opacity-90 animate-fadeInUp">
+                            To democratize access to premium technology by curating the best products, providing expert guidance, and delivering exceptional customer experiences that inspire and empower our community.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <style>
+                @keyframes fadeInUp {
+                    from { opacity: 0; transform: translateY(30px);}
+                    to { opacity: 1; transform: translateY(0);}
+                }
+                .animate-fadeInUp { animation: fadeInUp 0.8s cubic-bezier(.4,0,.2,1) forwards;}
+                @keyframes spin-slow {
+                    0% { transform: rotate(0deg);}
+                    100% { transform: rotate(360deg);}
+                }
+                .animate-spin-slow { animation: spin-slow 4s linear infinite;}
+            </style>
+
+            <div class="mb-20">
+                <h3 class="text-3xl font-bold text-gray-800 text-center mb-12">Why Choose TechVibe?</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="text-center p-6 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <div class="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Quality Guaranteed</h4>
+                        <p class="text-gray-600">Every product is carefully tested and comes with our comprehensive warranty and support.</p>
+                    </div>
+                    <div class="text-center p-6 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <div class="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Lightning Fast Delivery</h4>
+                        <p class="text-gray-600">Free express shipping on orders over $100. Most items delivered within 2-3 business days.</p>
+                    </div>
+                    <div class="text-center p-6 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <div class="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5z"></path>
+                            </svg>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Expert Support</h4>
+                        <p class="text-gray-600">Our tech specialists are available 24/7 to help you choose the perfect products for your needs.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-12 text-white text-center">
+                <h3 class="text-3xl font-bold mb-6">Meet Our Leadership Team</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+                    <div class="text-center">
+                        <div class="w-24 h-24 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <img src="mira.webp" alt="Sarah Chen" class="w-24 h-24 object-cover rounded-full">
+                        </div>
+                        <h4 class="text-xl font-bold mb-2">Sarah Chen</h4>
+                        <p class="text-purple-200 mb-2">CEO & Founder</p>
+                        <p class="text-sm opacity-90">Former Apple engineer with 15+ years in consumer electronics</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-24 h-24 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <img src="man-7796384_640.jpg" alt="Marcus Rodriguez" class="w-24 h-24 object-cover rounded-full">
+                        </div>
+                        <h4 class="text-xl font-bold mb-2">Marcus Rodriguez</h4>
+                        <p class="text-purple-200 mb-2">CTO</p>
+                        <p class="text-sm opacity-90">Tech visionary specializing in AI and emerging technologies</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-24 h-24 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <img src="man-7797279_640.jpg" alt="Emily Watson" class="w-24 h-24 object-cover rounded-full">
+                        </div>
+                        <h4 class="text-xl font-bold mb-2">Emily Watson</h4>
+                        <p class="text-purple-200 mb-2">Head of Customer Experience</p>
+                        <p class="text-sm opacity-90">Customer service expert ensuring every interaction exceeds expectations</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <div id="contact"></div>
+    <section class="bg-gray-900 text-white">
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-2xl font-bold mb-4">OpeShop</h3>
+                    <p class="text-gray-400">Your destination for premium electronics and cutting-edge technology.</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Other Services</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="https://jahidads.github.io/Portfolio/" class="hover:text-white transition-colors">Web Design</a></li>
+                        <li><a href="https://jahidads.github.io/CyberShield/" class="hover:text-white transition-colors">CyberShield</a></li>
+                        <li><a href="https://jahidads.github.io/Cyber-Security/" class="hover:text-white transition-colors">CybersecPro</a></li>
+                        <li><a href="https://jahidads.github.io/BookHub/" class="hover:text-white transition-colors">BookHub</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Support</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="https://jahidads.github.io/TeamPro/" class="hover:text-white transition-colors">Help Center</a></li>
+                        <li><a href="https://wa.me/8801308839759" class="hover:text-white transition-colors">Live Chat</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Warranty Details</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Returns Policy</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Connect</h4>
+                    <div class="flex space-x-4">
+                        <a href="https://www.facebook.com/jahidads1" class="text-gray-400 hover:text-white transition-colors" aria-label="Facebook">
+                            <img src="https://img.icons8.com/color/48/facebook-new.png" alt="Facebook" class="w-9 h-9">
+                        </a>
+                        <a href="https://www.instagram.com/jahidhasan2.0ff/" class="text-gray-400 hover:text-white transition-colors" aria-label="Instagram">
+                            <img src="https://img.icons8.com/color/48/instagram-new.png" alt="Instagram" class="w-9 h-9">
+                        </a>
+                        <a href="https://bd.linkedin.com/in/jahidads" class="text-gray-400 hover:text-white transition-colors" aria-label="LinkedIn">
+                            <img src="https://img.icons8.com/color/48/linkedin.png" alt="LinkedIn" class="w-9 h-9">
+                        </a>
+                        <a href="https://x.com/jahidads" class="text-gray-400 hover:text-white transition-colors" aria-label="Twitter">
+                            <img src="https://img.icons8.com/color/48/twitter--v1.png" alt="Twitter" class="w-9 h-9">
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2025 OpeShop. Design by 💕Jahid Hasan.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Global variables
+        let wishlist = [];
+        let compareList = [];
+        let cart = [];
+
+        // Filter functionality
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const productCards = document.querySelectorAll('.product-card');
+
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                // Add active class to clicked button
+                button.classList.add('active');
+
+                const filterValue = button.getAttribute('data-filter');
+
+                productCards.forEach(card => {
+                    if (filterValue === 'all' || card.getAttribute('data-category') === filterValue) {
+                        card.style.display = 'block';
+                        card.style.animation = 'fadeIn 0.6s ease forwards';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            productCards.forEach(card => {
+                const productName = card.querySelector('h3').textContent.toLowerCase();
+                const productDescription = card.querySelector('p').textContent.toLowerCase();
+                
+                if (productName.includes(searchTerm) || productDescription.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        // Sort functionality
+        const sortSelect = document.getElementById('sortSelect');
+        sortSelect.addEventListener('change', (e) => {
+            const sortValue = e.target.value;
+            const productsGrid = document.getElementById('products-grid');
+            const cards = Array.from(productCards);
+            
+            cards.sort((a, b) => {
+                if (sortValue === 'name') {
+                    return a.dataset.name.localeCompare(b.dataset.name);
+                } else if (sortValue === 'price-low') {
+                    return parseInt(a.dataset.price) - parseInt(b.dataset.price);
+                } else if (sortValue === 'price-high') {
+                    return parseInt(b.dataset.price) - parseInt(a.dataset.price);
+                }
+            });
+            
+            cards.forEach(card => productsGrid.appendChild(card));
+        });
+
+        // Cart functionality
+        const cartBtn = document.getElementById('cartBtn');
+        const cartCount = document.getElementById('cartCount');
+        const cartModal = document.getElementById('cartModal');
+        const cartItems = document.getElementById('cartItems');
+        const cartTotal = document.getElementById('cartTotal');
+        const cartFooter = document.getElementById('cartFooter');
+        const closeCart = document.getElementById('closeCart');
+        const clearCart = document.getElementById('clearCart');
+        const checkoutBtn = document.getElementById('checkoutBtn');
+
+        function updateCartCount() {
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            if (totalItems > 0) {
+                cartCount.textContent = totalItems;
+                cartCount.classList.remove('hidden');
+            } else {
+                cartCount.classList.add('hidden');
+            }
+        }
+
+        function updateCartDisplay() {
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<p class="text-gray-500 text-center py-8">Your cart is empty</p>';
+                cartFooter.classList.add('hidden');
+            } else {
+                let cartHTML = '';
+                let total = 0;
+
+                cart.forEach((item, index) => {
+                    const itemTotal = item.price * item.quantity;
+                    total += itemTotal;
+                    
+                    cartHTML += `
+                        <div class="flex items-center justify-between p-4 border-b">
+                            <div class="flex-1">
+                                <h4 class="font-semibold">${item.name}</h4>
+                                <p class="text-gray-600">$${item.price}</p>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <button class="decrease-qty bg-gray-200 text-gray-700 w-8 h-8 rounded-full hover:bg-gray-300" data-index="${index}">-</button>
+                                <span class="font-medium">${item.quantity}</span>
+                                <button class="increase-qty bg-gray-200 text-gray-700 w-8 h-8 rounded-full hover:bg-gray-300" data-index="${index}">+</button>
+                                <button class="remove-item text-red-500 hover:text-red-700 ml-4" data-index="${index}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                cartItems.innerHTML = cartHTML;
+                cartTotal.textContent = `$${total.toLocaleString()}`;
+                cartFooter.classList.remove('hidden');
+            }
+        }
+
+        function addToCart(productCard) {
+            const name = productCard.querySelector('h3').textContent;
+            const price = parseInt(productCard.dataset.price);
+            
+            const existingItem = cart.find(item => item.name === name);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({ name, price, quantity: 1 });
+            }
+            
+            updateCartCount();
+            updateCartDisplay();
+            
+            // Show success message
+            const addBtn = productCard.querySelector('.add-to-cart');
+            const originalText = addBtn.textContent;
+            addBtn.textContent = 'Added!';
+            addBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            addBtn.classList.add('bg-green-800');
+            
+            setTimeout(() => {
+                addBtn.textContent = originalText;
+                addBtn.classList.remove('bg-green-800');
+                addBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            }, 1000);
+        }
+
+        // Add to cart event listeners
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.add-to-cart')) {
+                const productCard = e.target.closest('.product-card');
+                addToCart(productCard);
+            }
+            
+            if (e.target.closest('.buy-now')) {
+                const productCard = e.target.closest('.product-card');
+                addToCart(productCard);
+                cartModal.classList.add('show');
+            }
+            
+            if (e.target.closest('.increase-qty')) {
+                const index = parseInt(e.target.closest('.increase-qty').dataset.index);
+                cart[index].quantity += 1;
+                updateCartCount();
+                updateCartDisplay();
+            }
+            
+            if (e.target.closest('.decrease-qty')) {
+                const index = parseInt(e.target.closest('.decrease-qty').dataset.index);
+                if (cart[index].quantity > 1) {
+                    cart[index].quantity -= 1;
+                } else {
+                    cart.splice(index, 1);
+                }
+                updateCartCount();
+                updateCartDisplay();
+            }
+            
+            if (e.target.closest('.remove-item')) {
+                const index = parseInt(e.target.closest('.remove-item').dataset.index);
+                cart.splice(index, 1);
+                updateCartCount();
+                updateCartDisplay();
+            }
+        });
+
+        // Cart modal controls
+        cartBtn.addEventListener('click', () => {
+            cartModal.classList.add('show');
+            updateCartDisplay();
+        });
+
+        closeCart.addEventListener('click', () => {
+            cartModal.classList.remove('show');
+        });
+
+        cartModal.addEventListener('click', (e) => {
+            if (e.target === cartModal) {
+                cartModal.classList.remove('show');
+            }
+        });
+
+        clearCart.addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear your cart?')) {
+                cart = [];
+                updateCartCount();
+                updateCartDisplay();
+            }
+        });
+
+        checkoutBtn.addEventListener('click', () => {
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            alert(`Checkout Summary:\n\nItems: ${cart.length}\nTotal: $${total.toLocaleString()}\n\nThis would normally redirect to a secure payment page.`);
+        });
+
+        // Wishlist functionality
+        const wishlistBtn = document.getElementById('wishlistBtn');
+        const wishlistCount = document.getElementById('wishlistCount');
+        
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.wishlist-heart')) {
+                const heartBtn = e.target.closest('.wishlist-heart');
+                const productCard = heartBtn.closest('.product-card');
+                const productName = productCard.querySelector('h3').textContent;
+                
+                if (wishlist.includes(productName)) {
+                    wishlist = wishlist.filter(item => item !== productName);
+                    heartBtn.classList.remove('text-red-500');
+                    heartBtn.classList.add('text-gray-400');
+                } else {
+                    wishlist.push(productName);
+                    heartBtn.classList.remove('text-gray-400');
+                    heartBtn.classList.add('text-red-500');
+                }
+                
+                updateWishlistCount();
+            }
+        });
+
+        function updateWishlistCount() {
+            if (wishlist.length > 0) {
+                wishlistCount.textContent = wishlist.length;
+                wishlistCount.classList.remove('hidden');
+            } else {
+                wishlistCount.classList.add('hidden');
+            }
+        }
+
+        wishlistBtn.addEventListener('click', () => {
+            if (wishlist.length > 0) {
+                alert(`Your Wishlist (${wishlist.length} items):\n\n${wishlist.join('\n')}`);
+            } else {
+                alert('Your wishlist is empty. Click the heart icon on products to add them!');
+            }
+        });
+
+        // Compare functionality
+        const compareBtn = document.getElementById('compareBtn');
+        const compareCheckboxes = document.querySelectorAll('.compare-checkbox');
+        
+        compareCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const productCard = e.target.closest('.product-card');
+                const productName = productCard.querySelector('h3').textContent;
+                
+                if (e.target.checked) {
+                    if (compareList.length < 3) {
+                        compareList.push({
+                            name: productName,
+                            price: productCard.querySelector('.text-2xl').textContent,
+                            category: productCard.dataset.category
+                        });
+                    } else {
+                        e.target.checked = false;
+                        alert('You can only compare up to 3 products at a time.');
+                    }
+                } else {
+                    compareList = compareList.filter(item => item.name !== productName);
+                }
+                
+                updateCompareButton();
+            });
+        });
+
+        function updateCompareButton() {
+            compareBtn.textContent = `Compare Selected (${compareList.length})`;
+            compareBtn.disabled = compareList.length < 2;
+        }
+
+        compareBtn.addEventListener('click', () => {
+            if (compareList.length >= 2) {
+                let compareText = 'Product Comparison:\n\n';
+                compareList.forEach((product, index) => {
+                    compareText += `${index + 1}. ${product.name}\n   Price: ${product.price}\n   Category: ${product.category}\n\n`;
+                });
+                compareText += 'This would normally open a detailed comparison page with specifications, features, and ratings.';
+                alert(compareText);
+            }
+        });
+
+        // Smooth scrolling for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add scroll effect to hero button
+        document.querySelector('.hero-gradient button').addEventListener('click', () => {
+            document.querySelector('#products').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'971f27cd556f7213',t:'MTc1NTY2NDIyOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
